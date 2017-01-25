@@ -2,19 +2,33 @@ import { expect } from 'chai';
 import { describe, it, beforeEach } from 'mocha';
 import { setupComponentTest } from 'ember-mocha';
 
-const assertViewport = (subject) => {
-  const ctx = subject.get('ctx');
-  const params = ctx.getParameter(ctx.VIEWPORT);
-
-  expect(params).to.eql({
-    '0': 0,
-    '1': 0,
-    '2': subject.$().width(),
-    '3': subject.$().height()
-  });
-};
-
 describe('WebGLComponent', function() {
+  const assertViewport = (subject) => {
+    const ctx = subject.get('ctx');
+    const params = ctx.getParameter(ctx.VIEWPORT);
+
+    expect(params).to.eql({
+      '0': 0,
+      '1': 0,
+      '2': subject.$().width(),
+      '3': subject.$().height()
+    });
+  };
+
+  const vertexShaderSrc = `
+    attribute vec3 coordinates;
+
+    void main(void) {
+      gl_Position = vec4(coordinates, 1.0);
+    }
+  `;
+
+  const fragmentShaderSrc = `
+    void main(void) {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 0.1);
+    }
+  `;
+
   setupComponentTest('web-g-l', {
     needs: [],
     unit: true
@@ -136,13 +150,7 @@ describe('WebGLComponent', function() {
   });
 
   it('creates a vertex shader', function () {
-    const shader = subject.vertexShader(`
-      attribute vec3 coordinates;
-
-      void main(void) {
-        gl_Position = vec4(coordinates, 1.0);
-      }
-    `);
+    const shader = subject.vertexShader(vertexShaderSrc);
 
     expect(shader instanceof WebGLShader).to.eql(true);
   });
@@ -154,11 +162,7 @@ describe('WebGLComponent', function() {
   });
 
   it('creates a fragment shader', function () {
-    const shader = subject.fragmentShader(`
-      void main(void) {
-        gl_FragColor = vec4(0.0, 0.0, 0.0, 0.1);
-      }
-    `);
+    const shader = subject.fragmentShader(fragmentShaderSrc);
 
     expect(shader instanceof WebGLShader).to.eql(true);
   });
@@ -171,5 +175,39 @@ describe('WebGLComponent', function() {
 
   it('creates a program', function () {
     expect(subject.shaderProgram() instanceof WebGLProgram).to.eql(true);
+  });
+
+  it('links a program', function () {
+    const ctx = subject.get('ctx');
+    const program = subject.shaderProgram();
+
+    subject.linkProgram(program, [
+      subject.vertexShader(vertexShaderSrc),
+      subject.fragmentShader(fragmentShaderSrc)
+    ]);
+
+    const num = ctx.getProgramParameter(program, ctx.ATTACHED_SHADERS);
+    expect(num).to.eql(2);
+  });
+
+  it('links when creating a program', function () {
+    const ctx = subject.get('ctx');
+
+    const program = subject.shaderProgram([
+      subject.vertexShader(vertexShaderSrc),
+      subject.fragmentShader(fragmentShaderSrc)
+    ]);
+
+    const num = ctx.getProgramParameter(program, ctx.ATTACHED_SHADERS);
+    expect(num).to.eql(2);
+  });
+
+  it('uses a program', function () {
+    const program = subject.shaderProgram([
+      subject.vertexShader(vertexShaderSrc),
+      subject.fragmentShader(fragmentShaderSrc)
+    ]);
+
+    subject.useProgram(program);
   });
 });

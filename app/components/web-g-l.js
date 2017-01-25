@@ -155,7 +155,7 @@ export default Ember.Component.extend({
     ctx.compileShader(shader);
 
     if (!ctx.getShaderParameter(shader, ctx.COMPILE_STATUS)) {
-      throw ctx.getShaderInfoLog(shader);
+      throw new Error(ctx.getShaderInfoLog(shader));
     }
 
     return shader;
@@ -169,7 +169,32 @@ export default Ember.Component.extend({
     return this.compileShader(src, this.get('ctx').FRAGMENT_SHADER);
   },
 
-  shaderProgram: function () {
-    return this.get('ctx').createProgram();
+  shaderProgram: function (shaders) {
+    const program = this.get('ctx').createProgram();
+
+    if (shaders) {
+      this.linkProgram(program, shaders);
+    }
+
+    return program;
+  },
+
+  linkProgram: function (program, shaders) {
+    const ctx = this.get('ctx');
+
+    shaders.forEach((shader) => {
+      ctx.attachShader(program, shader);
+    });
+
+    ctx.linkProgram(program);
+    ctx.validateProgram(program);
+
+    if (!ctx.getProgramParameter(program, ctx.LINK_STATUS)) {
+      throw new Error(ctx.getProgramInfoLog(program));
+    }
+  },
+
+  useProgram: function (program) {
+    this.get('ctx').useProgram(program);
   }
 });
