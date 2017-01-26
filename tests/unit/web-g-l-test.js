@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { describe, it, beforeEach } from 'mocha';
 import { setupComponentTest } from 'ember-mocha';
+import sinon from 'sinon';
 
 describe('WebGLComponent', function() {
   const assertViewport = (subject) => {
@@ -23,11 +24,28 @@ describe('WebGLComponent', function() {
     }
   `;
 
+  const vertexShaderUniformSrc = `
+    attribute vec3 coordinates;
+    uniform vec4 translation;
+
+    void main(void) {
+      gl_Position = vec4(coordinates, 1.0) + translation;
+    }
+  `;
+
   const fragmentShaderSrc = `
     void main(void) {
       gl_FragColor = vec4(0.0, 0.0, 0.0, 0.1);
     }
   `;
+
+  const triangleVertices = [
+    -0.5,0.5,0.0,
+    -0.5,-0.5,0.0,
+    0.5,-0.5,0.0, 
+  ];
+
+  const triangleElements = [0,1,2];
 
   setupComponentTest('web-g-l', {
     needs: [],
@@ -203,11 +221,40 @@ describe('WebGLComponent', function() {
   });
 
   it('uses a program', function () {
+    const ctx = subject.get('ctx');
+    ctx.useProgram = sinon.spy(ctx.useProgram);
+
     const program = subject.shaderProgram([
       subject.vertexShader(vertexShaderSrc),
       subject.fragmentShader(fragmentShaderSrc)
     ]);
 
     subject.useProgram(program);
+    sinon.assert.calledOnce(ctx.useProgram);
+    sinon.assert.calledWith(ctx.useProgram, program);
+  });
+
+  it('creates buffers', function () {
+    const buffer = subject.createBuffer({
+      vertices: triangleVertices,
+      elements: triangleElements
+    });
+
+    expect(buffer.elements instanceof WebGLBuffer).to.eql(true);
+    expect(buffer.vertices instanceof WebGLBuffer).to.eql(true);
+  });
+
+  it('get program attributes', function () {
+    const program = subject.shaderProgram([
+      subject.vertexShader(vertexShaderUniformSrc),
+      subject.fragmentShader(fragmentShaderSrc)
+    ]);
+
+    const result = subject.getProgramAttributes(program);
+    expect(result).to.be.a('object');
+    expect(result.vertices).to.have.length(1);
+    expect(result.uniforms).to.have.length(1);
+    expect(result.uniforms[0] instanceof WebGLActiveInfo).to.eql(true);
+    expect(result.uniforms[0] instanceof WebGLActiveInfo).to.eql(true);
   });
 });

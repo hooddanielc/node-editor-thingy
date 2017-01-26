@@ -24,7 +24,9 @@
     "currentRouteName",
     "WebGLRenderingContext",
     "WebGLShader",
-    "WebGLProgram"
+    "WebGLProgram",
+    "WebGLBuffer",
+    "WebGLActiveInfo"
   ],
   "node": false,
   "browser": false,

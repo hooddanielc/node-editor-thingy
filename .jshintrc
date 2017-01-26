@@ -5,7 +5,9 @@
     "-Promise",
     "WebGLRenderingContext",
     "WebGLShader",
-    "WebGLProgram"
+    "WebGLProgram",
+    "WebGLBuffer",
+    "WebGLActiveInfo"
   ],
   "browser": true,
   "boss": true,

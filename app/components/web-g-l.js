@@ -196,5 +196,47 @@ export default Ember.Component.extend({
 
   useProgram: function (program) {
     this.get('ctx').useProgram(program);
+  },
+
+  getProgramAttributes: function (program) {
+    const ctx = this.get('ctx');
+    const numAttributes = ctx.getProgramParameter(program, ctx.ACTIVE_ATTRIBUTES);
+    const numUniforms = ctx.getProgramParameter(program, ctx.ACTIVE_UNIFORMS);
+    const uniforms = [];
+    const vertices = [];
+
+    for (let i = 0; i < numAttributes; ++i) {
+      vertices.push(ctx.getActiveAttrib(program, i));
+    }
+
+    for (let i = 0; i < numUniforms; ++i) {
+      uniforms.push(ctx.getActiveUniform(program, i));
+    }
+
+    return {
+      uniforms: uniforms,
+      vertices: vertices
+    };
+  },
+
+  createBuffer: function ({ vertices, elements }) {
+    const ctx = this.get('ctx');
+
+    // create vertex array
+    const verts = ctx.createBuffer(ctx.VERTEX_BUFFER);
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, verts);
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(vertices), ctx.STATIC_DRAW);
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, null);
+
+    // create element array buffer
+    const elems = ctx.createBuffer(ctx.ELEMENT_ARRAY_BUFFER);
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, elems);
+    ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, new Uint16Array(elements), ctx.STATIC_DRAW);
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, null);
+
+    return {
+      elements: elems,
+      vertices: verts
+    };
   }
 });
