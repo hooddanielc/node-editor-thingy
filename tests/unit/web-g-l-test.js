@@ -254,7 +254,9 @@ describe('WebGLComponent', function() {
     expect(result).to.be.a('object');
     expect(result.vertices).to.have.length(1);
     expect(result.uniforms).to.have.length(1);
+    expect(result.vertices[0] instanceof WebGLActiveInfo).to.eql(true);
     expect(result.uniforms[0] instanceof WebGLActiveInfo).to.eql(true);
-    expect(result.uniforms[0] instanceof WebGLActiveInfo).to.eql(true);
+    expect(result.vertices[0].typeName).to.eql('FLOAT_VEC3');
+    expect(result.uniforms[0].typeName).to.eql('FLOAT_VEC4');
   });
 });
